@@ -1,0 +1,23 @@
+[package]
+name = "gtm-08-churn-nrr"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Keep and grow the revenue you already have: an NRR / GRR bridge from MRR snapshots, explainable health and renewal-risk scores, and usage drop-off and expansion alerts against each account's own baseline."
+repository = "https://github.com/braylo777/gtm-08-churn-nrr"
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[[bin]]
+name = "gtm-08-churn-nrr"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = "=1.0.154"
+
+[profile.release]
+opt-level = "s"
+lto = true
+panic = "abort"
+codegen-units = 1

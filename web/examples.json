@@ -1,0 +1,229 @@
+{
+ "stage": 8,
+ "repo": "gtm-08-churn-nrr",
+ "title": "Predictive Churn & Net Revenue Retention (NRR)",
+ "tagline": "Keep and grow the revenue you already have: an NRR / GRR bridge from MRR snapshots, explainable health and renewal-risk scores, and usage drop-off and expansion alerts against each account's own baseline.",
+ "why": "For a SaaS company past early growth, net revenue retention decides the valuation more than new logos do. Churn rarely surprises the data: usage drops, the champion leaves, seats go unused, and renewal gets close. The work is to see it early, explain it in one line a CSM can act on, and catch the expansion signals on the same screen.",
+ "covers": [
+  "NRR / GRR bridge: new, reactivation, expansion, contraction, churn per account; formulas use the starting cohort only; GRR capped at 100%",
+  "Health score: signals normalized between a bad and a good value (either direction), weights, trend vs last period, green / yellow / red bands, missing signals listed",
+  "Renewal risk: low health + urgency from days to renewal + named risk events (champion left, P1 ticket), with the play to run and the biggest drag",
+  "Usage alerts: drop-off when every recent week is below baseline by a threshold; expansion on sustained growth or seat utilization; shelfware under 50% seats"
+ ],
+ "gaps": [
+  "Risk weights are set by hand, not fit on historical churn (no logistic regression or survival model yet)",
+  "No CRM / CS platform connection: snapshots and signals are synthetic JSON",
+  "No seasonality adjustment in the usage baseline"
+ ],
+ "ops": [
+  {
+   "op": "nrr_bridge",
+   "label": "NRR bridge",
+   "help": "Compare start-of-year and end-of-year MRR per account to get the NRR and GRR bridge.",
+   "input": {
+    "start_mrr": {
+     "northwind": 8000,
+     "contoso": 12000,
+     "fabrikam": 3000,
+     "tailspin": 1500,
+     "wideworld": 6000,
+     "adatum": 2500,
+     "litware": 900
+    },
+    "end_mrr": {
+     "northwind": 11500,
+     "contoso": 12000,
+     "fabrikam": 2200,
+     "wideworld": 7200,
+     "adatum": 0,
+     "litware": 900,
+     "proseware": 4000,
+     "lucerne": 1800
+    },
+    "previously_churned": [
+     "lucerne"
+    ]
+   }
+  },
+  {
+   "op": "health_scores",
+   "label": "Health + renewal risk",
+   "help": "Score account health from five signals, then rank renewal risk with days to renewal and risk events.",
+   "input": {
+    "model": [
+     {
+      "signal": "weekly_active_pct",
+      "weight": 30,
+      "bad": 20,
+      "good": 80
+     },
+     {
+      "signal": "core_feature_depth",
+      "weight": 20,
+      "bad": 1,
+      "good": 6
+     },
+     {
+      "signal": "open_tickets",
+      "weight": 15,
+      "bad": 8,
+      "good": 0
+     },
+     {
+      "signal": "nps",
+      "weight": 15,
+      "bad": -20,
+      "good": 50
+     },
+     {
+      "signal": "exec_meetings_90d",
+      "weight": 20,
+      "bad": 0,
+      "good": 3
+     }
+    ],
+    "risk_events": {
+     "champion_left": 25,
+     "p1_ticket_open": 15,
+     "budget_freeze": 20,
+     "competitor_eval": 20
+    },
+    "accounts": [
+     {
+      "account": "northwind",
+      "previous_score": 71,
+      "days_to_renewal": 210,
+      "signals": {
+       "weekly_active_pct": 74,
+       "core_feature_depth": 5,
+       "open_tickets": 1,
+       "nps": 42,
+       "exec_meetings_90d": 2
+      }
+     },
+     {
+      "account": "contoso",
+      "previous_score": 68,
+      "days_to_renewal": 45,
+      "events": [
+       "champion_left"
+      ],
+      "signals": {
+       "weekly_active_pct": 51,
+       "core_feature_depth": 3,
+       "open_tickets": 4,
+       "nps": 10,
+       "exec_meetings_90d": 0
+      }
+     },
+     {
+      "account": "fabrikam",
+      "previous_score": 52,
+      "days_to_renewal": 20,
+      "events": [
+       "competitor_eval",
+       "p1_ticket_open"
+      ],
+      "signals": {
+       "weekly_active_pct": 28,
+       "core_feature_depth": 2,
+       "open_tickets": 7,
+       "nps": -10,
+       "exec_meetings_90d": 0
+      }
+     },
+     {
+      "account": "wideworld",
+      "days_to_renewal": 120,
+      "signals": {
+       "weekly_active_pct": 66,
+       "core_feature_depth": 4,
+       "open_tickets": 2,
+       "exec_meetings_90d": 1
+      }
+     }
+    ]
+   }
+  },
+  {
+   "op": "usage_alerts",
+   "label": "Usage alerts",
+   "help": "Compare the last 3 weeks with each account's own baseline. Flag drop-off, expansion and shelfware.",
+   "input": {
+    "recent_weeks": 3,
+    "drop_pct": 30,
+    "growth_pct": 25,
+    "seat_utilization_pct": 90,
+    "accounts": [
+     {
+      "account": "northwind",
+      "weekly_usage": [
+       820,
+       860,
+       840,
+       900,
+       880,
+       1150,
+       1210,
+       1260
+      ],
+      "seats_used": 47,
+      "seats_licensed": 50
+     },
+     {
+      "account": "contoso",
+      "weekly_usage": [
+       1500,
+       1480,
+       1520,
+       1490,
+       1510,
+       900,
+       820,
+       760
+      ],
+      "seats_used": 80,
+      "seats_licensed": 120
+     },
+     {
+      "account": "fabrikam",
+      "weekly_usage": [
+       300,
+       320,
+       310,
+       290,
+       305,
+       120,
+       90,
+       60
+      ],
+      "seats_used": 9,
+      "seats_licensed": 25
+     },
+     {
+      "account": "litware",
+      "weekly_usage": [
+       100,
+       110,
+       95,
+       105,
+       98,
+       102,
+       99,
+       101
+      ],
+      "seats_used": 6,
+      "seats_licensed": 10
+     },
+     {
+      "account": "proseware",
+      "weekly_usage": [
+       40,
+       60
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}
