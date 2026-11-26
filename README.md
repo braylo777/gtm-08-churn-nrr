@@ -72,7 +72,7 @@ web/              demo page; examples.json drives both the page and this README
 
 ## Design choices
 
-- **Rust, few dependencies.** Only `serde_json`, pinned to an exact version with a committed `Cargo.lock`.
+- **Rust, few dependencies.** Only `serde_json`, pinned to exact versions with a committed `Cargo.lock`.
 - **Deterministic.** Time, randomness and keys are inputs, so every result can be replayed in a test or an audit.
 - **Fail closed.** Unknown input or missing fields give an error, never a silent default.
 
